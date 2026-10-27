@@ -1,0 +1,598 @@
+# Bundled benchmark suite for llm-eval-benchmark.
+#
+# 40 hand-written tasks across four categories:
+#   - factual_qa                 (exact_match / regex, deterministic)
+#   - arithmetic_reasoning        (numeric_tolerance, deterministic)
+#   - instruction_following       (llm_judge, rubric + offline heuristics)
+#   - summarization_faithfulness (llm_judge, rubric + offline heuristics)
+#
+# Every task carries two hand-authored canned responses under
+# mock_responses: "strong" (a careful, correct, instruction-following
+# answer) and "weak" (a plausible but flawed one -- wrong fact, ignored
+# constraint, or hallucinated detail). These power MockCandidate and let the
+# whole pipeline run with zero network access.
+#
+# llm_judge tasks additionally carry "heuristics": deterministic checks used
+# by RuleBasedJudge as an offline fallback for the real Anthropic-backed
+# LLMJudge, which uses "rubric" instead.
+
+version: 1
+
+tasks:
+  # ---------------------------------------------------------------------
+  # factual_qa
+  # ---------------------------------------------------------------------
+  - id: fqa-01
+    category: factual_qa
+    prompt: "What is the capital of France?"
+    scoring:
+      method: exact_match
+      reference_answer: "Paris"
+    mock_responses:
+      strong: "The capital of France is Paris."
+      weak: "I believe the capital of France is Lyon, though I could be mixing it up with another city."
+
+  - id: fqa-02
+    category: factual_qa
+    prompt: "What is the capital of Japan?"
+    scoring:
+      method: exact_match
+      reference_answer: "Tokyo"
+    mock_responses:
+      strong: "Tokyo is the capital of Japan."
+      weak: "The capital of Japan is Osaka, if I recall correctly."
+
+  - id: fqa-03
+    category: factual_qa
+    prompt: "Who wrote the play 'Romeo and Juliet'?"
+    scoring:
+      method: exact_match
+      reference_answer: "Shakespeare"
+      aliases: ["William Shakespeare"]
+    mock_responses:
+      strong: "William Shakespeare wrote 'Romeo and Juliet'."
+      weak: "I think 'Romeo and Juliet' was written by Christopher Marlowe."
+
+  - id: fqa-04
+    category: factual_qa
+    prompt: "What is the chemical symbol for the element gold?"
+    scoring:
+      method: exact_match
+      reference_answer: "Au"
+    mock_responses:
+      strong: "The chemical symbol for gold is Au."
+      weak: "The chemical symbol for gold is Gd, I believe."
+
+  - id: fqa-05
+    category: factual_qa
+    prompt: "What is the largest planet in our solar system?"
+    scoring:
+      method: exact_match
+      reference_answer: "Jupiter"
+    mock_responses:
+      strong: "Jupiter is the largest planet in our solar system."
+      weak: "Saturn is the largest planet in our solar system."
+
+  - id: fqa-06
+    category: factual_qa
+    prompt: "In what year did World War II end?"
+    scoring:
+      method: regex
+      pattern: "\\b1945\\b"
+    mock_responses:
+      strong: "World War II ended in 1945."
+      weak: "World War II came to an end in 1944, following the surrender of Japan."
+
+  - id: fqa-07
+    category: factual_qa
+    prompt: "What is the opposite of the word 'ascend'?"
+    scoring:
+      method: regex
+      pattern: "\\b(descend|descending|downward)\\b"
+    mock_responses:
+      strong: "The opposite of 'ascend' is 'descend'."
+      weak: "The opposite of 'ascend' could be 'rise' or 'climb', depending on context."
+
+  - id: fqa-08
+    category: factual_qa
+    prompt: "How many continents are there on Earth?"
+    scoring:
+      method: exact_match
+      reference_answer: "7"
+      aliases: ["seven"]
+    mock_responses:
+      strong: "There are seven continents on Earth."
+      weak: "There are six continents on Earth, depending on how you count them."
+
+  - id: fqa-09
+    category: factual_qa
+    prompt: "What currency is used in Japan?"
+    scoring:
+      method: exact_match
+      reference_answer: "yen"
+    mock_responses:
+      strong: "Japan uses the yen as its currency."
+      weak: "Japan's currency is the won, similar to South Korea's."
+
+  - id: fqa-10
+    category: factual_qa
+    prompt: "Who was the first President of the United States?"
+    scoring:
+      method: exact_match
+      reference_answer: "George Washington"
+      aliases: ["Washington"]
+    mock_responses:
+      strong: "The first President of the United States was George Washington."
+      weak: "The first President of the United States was John Adams."
+
+  # ---------------------------------------------------------------------
+  # arithmetic_reasoning
+  # ---------------------------------------------------------------------
+  - id: math-01
+    category: arithmetic_reasoning
+    prompt: "What is 17 multiplied by 23?"
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "391"
+      tolerance: 0
+    mock_responses:
+      strong: "17 multiplied by 23 is 391."
+      weak: "17 multiplied by 23 is approximately 381."
+
+  - id: math-02
+    category: arithmetic_reasoning
+    prompt: "What is 144 divided by 12?"
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "12"
+      tolerance: 0
+    mock_responses:
+      strong: "144 divided by 12 is 12."
+      weak: "144 divided by 12 is 14."
+
+  - id: math-03
+    category: arithmetic_reasoning
+    prompt: "What is 7 squared, plus 3?"
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "52"
+      tolerance: 0
+    mock_responses:
+      strong: "7 squared is 49, so 49 plus 3 equals 53."
+      weak: "7 squared is 49, plus 3 is 49."
+
+  - id: math-04
+    category: arithmetic_reasoning
+    prompt: "A train travels at 60 miles per hour for 2.5 hours. How far does it travel, in miles?"
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "150"
+      tolerance: 0
+    mock_responses:
+      strong: "The train travels 150 miles."
+      weak: "The train travels approximately 125 miles."
+
+  - id: math-05
+    category: arithmetic_reasoning
+    prompt: "What is 15% of 200?"
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "30"
+      tolerance: 0
+    mock_responses:
+      strong: "15% of 200 is 30."
+      weak: "15% of 200 is 35."
+
+  - id: math-06
+    category: arithmetic_reasoning
+    prompt: "What is the sum of the first 10 positive integers (1 through 10)?"
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "55"
+      tolerance: 0
+    mock_responses:
+      strong: "The sum of the first 10 positive integers is 55."
+      weak: "The sum of the first 10 positive integers is 45."
+
+  - id: math-07
+    category: arithmetic_reasoning
+    prompt: "What is the area of a rectangle with sides 8 and 5?"
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "40"
+      tolerance: 0
+    mock_responses:
+      strong: "The area is 8 times 5, which is 40."
+      weak: "The area is 8 plus 5, which is 13."
+
+  - id: math-08
+    category: arithmetic_reasoning
+    prompt: "If x + 5 = 12, what is x?"
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "7"
+      tolerance: 0
+    mock_responses:
+      strong: "Subtracting 5 from both sides, x = 7."
+      weak: "Subtracting 5 from both sides, x = 17."
+
+  - id: math-09
+    category: arithmetic_reasoning
+    prompt: "A shirt costs $40 and is discounted by 25%. What is the final price, in dollars?"
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "30"
+      tolerance: 0
+    mock_responses:
+      strong: "25% of 40 is 10, so the final price is 30 dollars."
+      weak: "25% of 40 is 15, so the final price is 25 dollars."
+
+  - id: math-10
+    category: arithmetic_reasoning
+    prompt: "Convert 5 miles to kilometers (1 mile = 1.60934 km), rounded to one decimal place."
+    scoring:
+      method: numeric_tolerance
+      reference_answer: "8.0"
+      tolerance: 0.05
+    mock_responses:
+      strong: "5 miles is approximately 8.0 kilometers."
+      weak: "5 miles is approximately 9.3 kilometers."
+
+  # ---------------------------------------------------------------------
+  # instruction_following
+  # ---------------------------------------------------------------------
+  - id: instr-01
+    category: instruction_following
+    prompt: "Respond with exactly one word: the opposite of 'hot'."
+    scoring:
+      method: llm_judge
+      rubric: >
+        A perfect response is a single word meaning the opposite of 'hot'
+        (e.g. 'cold'), with no extra commentary. Deduct heavily for extra
+        words or hedging.
+      heuristics:
+        max_words: 1
+        must_include_any: ["cold"]
+    mock_responses:
+      strong: "Cold"
+      weak: "I think the opposite of 'hot' would be 'cold', but it can also depend on context."
+
+  - id: instr-02
+    category: instruction_following
+    prompt: "Write a haiku (exactly 3 lines) about autumn leaves."
+    scoring:
+      method: llm_judge
+      rubric: >
+        Score high if the response is exactly 3 lines and evokes autumn
+        leaves; score low if it is not 3 lines or is off-topic.
+      heuristics:
+        min_lines: 3
+        max_lines: 3
+        must_include_any: ["leaf", "leaves", "autumn", "fall"]
+    mock_responses:
+      strong: |
+        Crimson leaves drift down
+        Whispering across the path
+        Autumn sighs and falls
+      weak: "Autumn leaves are so beautiful this time of year, falling gently from the trees and covering the ground in red and orange hues."
+
+  - id: instr-03
+    category: instruction_following
+    prompt: "List exactly three fruits, one per line, with no extra commentary."
+    scoring:
+      method: llm_judge
+      rubric: >
+        A perfect response has exactly three lines, each a single fruit
+        name, and no introductory or closing commentary.
+      heuristics:
+        min_lines: 3
+        max_lines: 3
+        forbidden_phrases: ["here are", "sure", "i'd be happy"]
+    mock_responses:
+      strong: |
+        Apple
+        Banana
+        Mango
+      weak: "Sure! Here are three fruits: apples, bananas, and mangoes."
+
+  - id: instr-04
+    category: instruction_following
+    prompt: "Reply with only 'YES' or 'NO': Is the sky typically blue on a clear day?"
+    scoring:
+      method: llm_judge
+      rubric: >
+        A perfect response is exactly 'YES' or 'NO' with nothing else
+        added.
+      heuristics:
+        max_words: 1
+        must_include_any: ["yes"]
+    mock_responses:
+      strong: "Yes"
+      weak: "Yes, the sky is typically blue on a clear day due to Rayleigh scattering."
+
+  - id: instr-05
+    category: instruction_following
+    prompt: >
+      Summarize the following rule in a single sentence under 15 words:
+      'Employees must submit expense reports within 30 days of the purchase
+      date, or reimbursement may be denied.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A perfect response is a single sentence under 15 words that
+        preserves the 30-day deadline and the expense-report subject.
+      heuristics:
+        max_words: 15
+        must_include_any: ["30 days", "expense"]
+    mock_responses:
+      strong: "Submit expense reports within 30 days or risk denied reimbursement."
+      weak: "Employees need to make sure that they submit their expense reports within thirty days of when they made the purchase, otherwise the company might not reimburse them for the cost."
+
+  - id: instr-06
+    category: instruction_following
+    prompt: >
+      Explain in 2 sentences why regular exercise is good for health. Do
+      not use the word 'however'.
+    scoring:
+      method: llm_judge
+      rubric: >
+        A perfect response is a concise two-sentence explanation of
+        exercise's health benefits that never uses the word 'however'.
+      heuristics:
+        forbidden_phrases: ["however"]
+        min_words: 10
+        max_words: 40
+    mock_responses:
+      strong: "Regular exercise strengthens the heart and improves circulation. It also boosts mood and helps maintain a healthy body weight."
+      weak: "Exercise is good for health; however, many people find it hard to maintain a routine, which is understandable given busy schedules and competing priorities."
+
+  - id: instr-07
+    category: instruction_following
+    prompt: >
+      Format your answer as a numbered list with exactly 2 items
+      describing benefits of sleep. Use the format '1. ...' and '2. ...'.
+    scoring:
+      method: llm_judge
+      rubric: >
+        A perfect response has exactly two lines, numbered '1.' and '2.',
+        each describing a distinct benefit of sleep.
+      heuristics:
+        min_lines: 2
+        max_lines: 2
+        must_include_all: ["1.", "2."]
+    mock_responses:
+      strong: |
+        1. Sleep improves memory and concentration.
+        2. Sleep supports immune function and recovery.
+      weak: "Sleep has many benefits including better memory, improved mood, immune support, and physical recovery, among other things."
+
+  - id: instr-08
+    category: instruction_following
+    prompt: >
+      Respond with a JSON object with keys 'name' and 'age' only,
+      describing a fictional person. No explanation, just the JSON.
+    scoring:
+      method: llm_judge
+      rubric: >
+        A perfect response is a bare JSON object with exactly the keys
+        'name' and 'age', with no surrounding explanation.
+      heuristics:
+        must_include_all: ['"name"', '"age"']
+        forbidden_phrases: ["sure", "here is", "here's"]
+    mock_responses:
+      strong: '{"name": "Alex Rivera", "age": 34}'
+      weak: "Sure! Here's a JSON object: {\"name\": \"Alex Rivera\", \"age\": 34}"
+
+  - id: instr-09
+    category: instruction_following
+    prompt: "Translate 'good morning' into Spanish. Respond with just the translation, nothing else."
+    scoring:
+      method: llm_judge
+      rubric: >
+        A perfect response is just the Spanish translation ('buenos
+        días'), with no extra words.
+      heuristics:
+        max_words: 3
+        must_include_any: ["buenos días", "buenos dias"]
+    mock_responses:
+      strong: "Buenos días"
+      weak: "In Spanish, 'good morning' translates to 'buenos días'."
+
+  - id: instr-10
+    category: instruction_following
+    prompt: "Name two primary colors. Respond with only the two color names separated by a comma, and nothing else."
+    scoring:
+      method: llm_judge
+      rubric: >
+        A perfect response is just two primary color names separated by a
+        comma, with no extra words.
+      heuristics:
+        max_words: 3
+        must_include_any: ["red", "blue", "yellow"]
+    mock_responses:
+      strong: "Red, blue"
+      weak: "Two primary colors are red and blue, which cannot be created by mixing other colors."
+
+  # ---------------------------------------------------------------------
+  # summarization_faithfulness
+  # ---------------------------------------------------------------------
+  - id: summ-01
+    category: summarization_faithfulness
+    prompt: >
+      Summarize in one sentence: 'In its third quarter, the company
+      reported revenue growth of 12%, driven primarily by strong demand in
+      its cloud division. The company did not announce any layoffs and
+      reaffirmed its full-year guidance.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary mentions the 12% revenue growth and must not
+        invent layoffs, losses, or a decline that contradicts the source.
+      heuristics:
+        must_include_any: ["12%", "revenue"]
+        forbidden_phrases: ["layoffs", "loss", "decline"]
+    mock_responses:
+      strong: "The company's revenue grew 12% in Q3, driven by strong demand in its cloud division, and it reaffirmed full-year guidance."
+      weak: "The company announced layoffs after reporting a revenue decline in the third quarter."
+
+  - id: summ-02
+    category: summarization_faithfulness
+    prompt: >
+      Summarize the key steps in one sentence: 'To make the sauce, melt
+      butter in a pan, whisk in flour to form a paste, then slowly add milk
+      while stirring until it thickens. Season with salt and pepper.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary preserves the actual ingredients (butter,
+        flour, milk) and must not invent ingredients that were never
+        mentioned, like cream, cheese, or garlic.
+      heuristics:
+        must_include_any: ["butter", "flour", "milk"]
+        forbidden_phrases: ["cream", "cheese", "garlic"]
+    mock_responses:
+      strong: "Melt butter, whisk in flour, slowly add milk while stirring, then season with salt and pepper."
+      weak: "Heat some cream with garlic and cheese until it thickens, then season to taste."
+
+  - id: summ-03
+    category: summarization_faithfulness
+    prompt: >
+      Summarize the result in one sentence: 'The home team won the match
+      3-1, scoring twice in the second half after trailing 1-0 at
+      halftime.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary reports the correct final score (3-1, a win for
+        the home team) and must not invent a different score or outcome.
+      heuristics:
+        must_include_any: ["3-1"]
+        forbidden_phrases: ["2-1", "4-1", "lost"]
+    mock_responses:
+      strong: "The home team came back from 1-0 down to win 3-1."
+      weak: "The home team lost the match 2-1 despite a strong second-half performance."
+
+  - id: summ-04
+    category: summarization_faithfulness
+    prompt: >
+      Summarize in one sentence: 'The Treaty of Versailles was signed in
+      1919, formally ending World War I.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary preserves the year 1919 and that it ended World
+        War I, and must not invent a different year or a different war.
+      heuristics:
+        must_include_any: ["1919"]
+        forbidden_phrases: ["1920", "1918", "World War II"]
+    mock_responses:
+      strong: "The Treaty of Versailles, signed in 1919, formally ended World War I."
+      weak: "The Treaty of Versailles was signed in 1920, ending World War II."
+
+  - id: summ-05
+    category: summarization_faithfulness
+    prompt: >
+      Summarize the key feature in one sentence: 'The new laptop model
+      features a 14-hour battery life and weighs just 1.2 kilograms, making
+      it one of the lightest in its class.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary preserves the 14-hour battery life and 1.2 kg
+        weight, and must not invent different figures or claim it is one
+        of the heaviest.
+      heuristics:
+        must_include_any: ["14-hour", "1.2"]
+        forbidden_phrases: ["8-hour", "2.5 kilograms", "heaviest"]
+    mock_responses:
+      strong: "The new laptop offers a 14-hour battery life and weighs only 1.2 kilograms."
+      weak: "The new laptop has an 8-hour battery life and is one of the heaviest in its class at 2.5 kilograms."
+
+  - id: summ-06
+    category: summarization_faithfulness
+    prompt: "Summarize in one sentence: 'Water boils at 100 degrees Celsius at sea level atmospheric pressure.'"
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary preserves the 100-degree-Celsius boiling point
+        at sea level and must not invent a different temperature.
+      heuristics:
+        must_include_any: ["100"]
+        forbidden_phrases: ["212 degrees celsius", "90 degrees"]
+    mock_responses:
+      strong: "At sea level, water boils at 100 degrees Celsius."
+      weak: "Water boils at around 90 degrees Celsius at sea level."
+
+  - id: summ-07
+    category: summarization_faithfulness
+    prompt: >
+      Summarize in one sentence: 'The weather report indicates light rain
+      throughout the afternoon with a high of 18 degrees Celsius, clearing
+      up by evening.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary preserves the light rain and 18-degree high,
+        and must not invent sunny skies, snow, or a different temperature.
+      heuristics:
+        must_include_any: ["rain", "18"]
+        forbidden_phrases: ["sunny all day", "snow", "30 degrees"]
+    mock_responses:
+      strong: "Expect light rain through the afternoon with a high near 18 degrees, clearing by evening."
+      weak: "The forecast calls for sunny skies all day with a high of 30 degrees."
+
+  - id: summ-08
+    category: summarization_faithfulness
+    prompt: >
+      Summarize the decision in one sentence: 'After discussion, the team
+      agreed to delay the product launch by two weeks to allow for
+      additional QA testing. No budget changes were made.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary preserves the two-week delay for QA and that
+        the budget was unchanged, and must not invent a cancellation or a
+        budget increase.
+      heuristics:
+        must_include_any: ["delay", "two weeks"]
+        forbidden_phrases: ["cancel the launch", "increase the budget", "launched early"]
+    mock_responses:
+      strong: "The team decided to delay the launch by two weeks for more QA testing, with no budget changes."
+      weak: "The team decided to cancel the launch and increase the budget for further development."
+
+  - id: summ-09
+    category: summarization_faithfulness
+    prompt: >
+      Summarize in one sentence: 'Marie Curie, born in 1867, was a
+      physicist and chemist known for her research on radioactivity.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary preserves the birth year 1867 and the
+        radioactivity research, and must not invent a different year or
+        field of study.
+      heuristics:
+        must_include_any: ["1867", "radioactivity"]
+        forbidden_phrases: ["1897", "biologist", "astronomy"]
+    mock_responses:
+      strong: "Marie Curie, born in 1867, was a physicist and chemist renowned for her research on radioactivity."
+      weak: "Marie Curie, born in 1897, was a biologist known for her work in astronomy."
+
+  - id: summ-10
+    category: summarization_faithfulness
+    prompt: >
+      Summarize in one sentence: 'The API enforces a rate limit of 100
+      requests per minute per API key; exceeding this returns a 429
+      error.'
+    scoring:
+      method: llm_judge
+      rubric: >
+        A faithful summary preserves the 100 requests/minute limit and the
+        429 error, and must not invent an unlimited quota or a different
+        error code.
+      heuristics:
+        must_include_any: ["100 requests", "429"]
+        forbidden_phrases: ["1000 requests", "unlimited", "500 error"]
+    mock_responses:
+      strong: "The API limits usage to 100 requests per minute per key, returning a 429 error if exceeded."
+      weak: "The API allows unlimited requests per minute, though it may occasionally return a 500 error."
